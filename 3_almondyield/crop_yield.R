@@ -1,50 +1,6 @@
----
-title: "Almond Analysis"
----
 
-```{r}
-library(tidyverse)
-
-climate_df <- read_table(here::here("3_almondyield", "data", "clim.txt")) |> 
-    janitor::clean_names()
-```
-
-```{r}
-# Minimum Feb temps
-feb_temps <- climate_df |> 
-    filter(month == 2) |> 
-    group_by(year) |> 
-    summarise(feb_min_temp = min(tmin_c))
-
-# Total January precip
-jan_precip <- climate_df |> 
-    filter(month == 1) |> 
-    group_by(year) |> 
-    summarise(jan_precip = sum(precip))
-
-yields <- -0.015 * feb_temps$feb_min_temp - 0.0046 * feb_temps$feb_min_temp^2 - 0.07 * jan_precip$jan_precip + 0.0043 * jan_precip$jan_precip^2 + 0.28
-
-min_yield <- min(yields)
-max_yield <- max(yields)
-mean_yield <- mean(yields)
-
-output_df <- data.frame(crop = "almonds", min_yield = round(min_yield, 3), max_yield = round(max_yield, 3), mean_yield = round(mean_yield, 3))
-
-kableExtra::kable(output_df)
-```
-
-```{r}
-source(here::here("3_almondyield", "almond_yield.R"))
-source(here::here("3_almondyield", "crop_yield.R"))
-```
-
-```{r}
-calculate_almond_yield(climate_df)
-```
-
-```{r}
-# Troubleshooting NA value in output
-test_function <- function(data, crop = "almond"){
+# Define crop function
+calculate_crop_yield <- function(data, crop = "almond"){
 if (crop == "almond"){
 # Minimum Feb temps
 feb_temps <- climate_df |> 
@@ -93,11 +49,5 @@ mean_yield <- mean(yields)
 
 output_df <- data.frame(crop = crop, min_yield = round(min_yield, 3), max_yield = round(max_yield, 3), mean_yield = round(mean_yield, 3))
 
-print(mean_yield)
-}
-
-test_function(climate_df, "almond")
-```
-```{r}
-calculate_crop_yield(climate_df, "wine grapes")
-```
+kableExtra::kable(output_df)
+} 
