@@ -3,9 +3,9 @@ title: "Almond Analysis"
 ---
 
 ```{mermaid}
-flowchart LR
-    Data --> Eq[Crop Model Equation]
-    Eq --> Yield[Crop Yields]
+flowchart TD
+    Data[(Climate Data:\nPrecip & Temp)]-->|Wrangle Data|Eq{Crop Model Equation}
+    Eq --> Yield[Crop Yields:\nMin, Mean, Max]
 ```
 
 ```{r}
