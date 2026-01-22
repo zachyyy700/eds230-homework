@@ -1,14 +1,25 @@
 ---
 title: "Almond Analysis"
+date: "January 21, 2026"
+author: "Zach Loo & Nico Gavigan"
 ---
 
 ```{mermaid}
 flowchart TD
-    Data[(Climate Data:\nPrecip & Temp)]-->|Wrangle Data|Eq{Crop Model Equation}
-    Eq --> Yield[Crop Yields:\nMin, Mean, Max]
+    Data[("Climate Data:<br>Precip & Temp<br>(mm & ℃)")]-->|Wrangle Data|equation
+    subgraph equation[Model Equation]
+        direction LR
+        TempPara[Temp Parameters<br>T<sub>n,2</sub>] --- PrecipPara[Precip Parameters<br>P<sub>1</sub>]
+    end
+
+    equation --> Yield["Crop Yields:<br>Min, Mean, Max<br>(Tons per Acre)"]
+
+    style equation fill:#F7D483
 ```
 
 ```{r}
+#| message: false
+# Load libraries & data
 library(tidyverse)
 
 climate_df <- read_table(here::here("3_almondyield", "data", "clim.txt")) |> 
@@ -16,14 +27,11 @@ climate_df <- read_table(here::here("3_almondyield", "data", "clim.txt")) |>
 ```
 
 ```{r}
+# Source almond function
 source(here::here("3_almondyield", "almond_yield.R"))
-source(here::here("3_almondyield", "crop_yield.R"))
 ```
 
 ```{r}
+# Call function on climate data
 calculate_almond_yield(climate_df)
-```
-
-```{r}
-calculate_crop_yield(climate_df, "wine grapes")
 ```

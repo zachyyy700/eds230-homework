@@ -1,5 +1,8 @@
-
-# Define crop function
+#' Calculate the minimum, mean, and maximum almond yield
+#' 
+#' @param data A dataframe containing daily measurements of minimum & maximum temperatures (Celcius) and precipitation (mm).
+#' 
+#' @return A kable table with the resulting almond yields.
 calculate_almond_yield <- function(data){
 # Yearly Minimum Feb temps
 feb_temps_yearly <- data |> 
@@ -26,5 +29,5 @@ output_df <- data.frame(crop = "almond",
     mean_yield = round(mean_yield, 3), 
     max_yield = round(max_yield, 3))
 
-kableExtra::kable(output_df)
+kableExtra::kable(output_df, col.names = c("Crop", "Min. Yield", "Mean Yield", "Max Yield"))
 } 
