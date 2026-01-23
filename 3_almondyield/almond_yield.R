@@ -30,4 +30,6 @@ output_df <- data.frame(crop = "almond",
     max_yield = round(max_yield, 3))
 
 kableExtra::kable(output_df, col.names = c("Crop", "Min. Yield", "Mean Yield", "Max Yield"))
+
+return(output_df)
 } 
