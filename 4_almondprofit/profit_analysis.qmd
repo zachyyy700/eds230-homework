@@ -1,0 +1,18 @@
+---
+title: "Almond Profit Model"
+author: "Zach Loo & Nico Gavigan"
+---
+
+```{r}
+library(tidyverse)
+```
+
+- price per unit * yield = revenue
+    - yield would vary, assume baseline yield
+- costs = fixed costs + variable costs
+- revenue - costs = profit
+
+
+```{mermaid}
+
+```
