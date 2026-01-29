@@ -5,11 +5,13 @@ date: "January 28, 2026"
 ---
 
 ```{r}
+#| message: false
 # Load packages
 library(tidyverse)
 ```
 
 ```{r}
+#| warning: false
 # Load data
 climate_df <- read_table(here::here("3_almondyield", "data", "clim.txt")) |> 
     janitor::clean_names()
@@ -38,7 +40,9 @@ variation_df <- bind_rows(stable_variation_df, unstable_variation_df)
 breaks_seq <- seq(plyr::round_any(min(variation_df$profit_dollar_acre), 1e6, floor), 
                   plyr::round_any(max(variation_df$profit_dollar_acre), 1e6, ceiling), 
                   by = 1e6)
+```
 
+```{r}
 # Plot variation
 ggplot(variation_df) +
     # Draw dashed line at $0
@@ -49,7 +53,7 @@ ggplot(variation_df) +
     annotate(geom = "label", x = 2005, y = 5e6, label = "Unit Price: $4000/ton ± 10%\nUnit Cost: $1000/ton ± 10%") +
     annotate(geom = "label", x = 2006, y = -2e6, label = "Unit Price: $2000/ton ± 45%\nUnit Cost: $1800/ton ± 40%") +
 
-    labs(x = "Year", y = "Almond Yield Profit per Farm Acre", title = "Profit from Almond Yield in Varying Market Conditions", caption = "Profit models were run 5 times for each type to simulate different market conditions and uncertainty, indicated by 5 unique lines for each group.") +
+    labs(x = "Year", y = "Almond Yield Profit per Farm Acre", title = "Profit from Almond Yield in Varying Market Conditions", caption = "Profit models were run 5 times for each type to simulate different market conditions\n and uncertainty, indicated by 5 unique lines for each group.") +
 
     scale_color_manual(values = c("#90c290", "#c17149")) +
 
