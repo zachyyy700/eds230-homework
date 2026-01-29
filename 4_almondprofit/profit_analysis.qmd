@@ -1,88 +1,62 @@
 ---
 title: "Almond Profit Model"
 author: "Zach Loo & Nico Gavigan"
+date: "January 28, 2026"
 ---
 
 ```{r}
+# Load packages
 library(tidyverse)
 ```
 
-- price per unit * yield = revenue
-    - yield would vary, assume baseline yield
-- costs = fixed costs + variable costs
-- revenue - costs = profit
-
-
-```{mermaid}
-
-```
-
 ```{r}
+# Load data
 climate_df <- read_table(here::here("3_almondyield", "data", "clim.txt")) |> 
     janitor::clean_names()
 ```
 
 ```{r}
-# Function structure
-baseline_yield <- 500
-unit_price <- 3
-unit_cost <- 1
-unit_cost_uncertain <- 0.20
-
-# Yearly Minimum Feb temps
-feb_temps_yearly <- data |> 
-filter(month == 2) |> 
-group_by(year) |> 
-summarise(feb_min_temps = min(tmin_c)) |> 
-pull(feb_min_temps)
-
-# Yearly January precip
-jan_precip_yearly <- data |> 
-filter(month == 1) |> 
-group_by(year) |> 
-summarise(jan_precip_sum = sum(precip)) |> 
-pull(jan_precip_sum)
-
-# Years
-years <- data |> 
-    filter(month == 1) |> 
-    pull(year) |> 
-    unique()
-# Anomaly yields
-yield_anomalies <- -0.015 * feb_temps_yearly - 0.0046 * feb_temps_yearly^2 - 
-                     0.07 * jan_precip_yearly + 0.0043 * jan_precip_yearly^2 + 0.28
-
-# Total yields
-total_yields <- baseline_yield + yield_anomalies
-
-# Varying unit cost
-varying_unit_cost <- unit_cost + rnorm(n = length(years), mean = 0, sd = unit_cost_uncertain)
-
-# Profit
-profit <- total_yields * (unit_price - varying_unit_cost)
-
-output_df  <- data.frame(
-year = years,
-yield = total_yields,
-unit_cost = varying_unit_cost,
-profit = profit
-)
-```
-
-```{r}
+# Source almond yield function
 source(here::here("4_almondprofit", "almond_profit.R"))
 ```
 
 ```{r}
-# Call function
-df1 <- calculate_almond_profit(data = climate_df, unit_price = 3, unit_cost = 1, unit_cost_uncertain = 0.15)
+# Iterating function with map 5 times for 5 random variations on uncertainty parameters
+stable_variation_df <- map_dfr(1:5, ~calculate_almond_profit(data = climate_df, unit_price = 4000, unit_price_uncertain = 0.10, unit_cost = 1000, unit_cost_uncertain = 0.10), .id = "variation") |> mutate(type = "stable")
 
-df2 <- calculate_almond_profit(data = climate_df, unit_price = 2, unit_cost = 1.8, unit_cost_uncertain = 0.40)
+# Iterating function with map on different uncertainty parameters
+unstable_variation_df <- map_dfr(1:5, ~calculate_almond_profit(data = climate_df, unit_price = 2000, unit_price_uncertain = 0.40, unit_cost = 1800, unit_cost_uncertain = 0.45), .id = "variation") |> mutate(type = "unstable")
 ```
-```{r}
-# Final plot
-ggplot() +
-    geom_line(data = df1, aes(x = year, y = profit)) +
-    geom_line(data = df2, aes(x = year, y = profit))
 
+```{r}
+# Combine stable & unstable dfs
+variation_df <- bind_rows(stable_variation_df, unstable_variation_df)
+```
+
+```{r}
+# Set y-axis breaks 
+breaks_seq <- seq(plyr::round_any(min(variation_df$profit_dollar_acre), 1e6, floor), 
+                  plyr::round_any(max(variation_df$profit_dollar_acre), 1e6, ceiling), 
+                  by = 1e6)
+
+# Plot variation
+ggplot(variation_df) +
+    # Draw dashed line at $0
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_line(aes(x = year, y = profit_dollar_acre, group = paste(variation, type), color = type)) +
+
+    # Add annotations for each group
+    annotate(geom = "label", x = 2005, y = 5e6, label = "Unit Price: $4000/ton ± 10%\nUnit Cost: $1000/ton ± 10%") +
+    annotate(geom = "label", x = 2006, y = -2e6, label = "Unit Price: $2000/ton ± 45%\nUnit Cost: $1800/ton ± 40%") +
+
+    labs(x = "Year", y = "Almond Yield Profit per Farm Acre", title = "Profit from Almond Yield in Varying Market Conditions", caption = "Profit models were run 5 times for each type to simulate different market conditions and uncertainty, indicated by 5 unique lines for each group.") +
+
+    scale_color_manual(values = c("#90c290", "#c17149")) +
+
+    theme_classic() +
+
+    theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+
+    # Edit y-axis tick labels
+    scale_y_continuous(labels = scales::label_dollar(scale = 1e-6, suffix = "M"), breaks = breaks_seq) 
 ```
