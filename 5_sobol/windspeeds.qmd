@@ -1,0 +1,69 @@
+---
+author: "Zach Loo"
+---
+
+```{r}
+library(tidyverse)
+library(sensitivity)
+```
+
+```{r}
+source(here::here("5_sobol", "Catm.R"))
+```
+
+```{r}
+# Create parameters from random sample
+np <- 1000
+v <- rnorm(mean = 300, sd = 50, n = np) # cm/s
+height <- runif(min = 3.5, max = 5.5, n = np) # m or cm??
+k_d <- rnorm(mean = 0.7, sd = 0.007, n = np)
+k_o <- rnorm(mean = 0.1, sd = 0.001, n = np)
+
+X1 <- cbind.data.frame(v, height, k_d, k_o)
+
+# Repeat sampling
+v2 <- rnorm(mean = 300, sd = 50, n = np)
+height2 <- runif(min = 3.5, max = 5.5, n = np)
+k_d2 <- rnorm(mean = 0.7, sd = 0.007, n = np)
+k_o2 <- rnorm(mean = 0.1, sd = 0.001, n = np)
+
+X2 <- cbind.data.frame(v2, height2, k_d2, k_o2)
+```
+
+```{r}
+sens_sobol <- sobolSalt(X1 = X1, X2 = X2, nboot = 100)
+```
+
+```{r}
+parms <- as.data.frame(sens_sobol$X)
+colnames(parms) <- colnames(X1)
+results <- pmap_dbl(parms, Catm)
+```
+
+```{r}
+sens_sobol <- sensitivity::tell(sens_sobol, results, res.names = 'yield')
+
+# Add row names
+row.names(sens_sobol$S) <- colnames(parms)
+row.names(sens_sobol$T) <- colnames(parms)
+```
+
+```{r}
+sens_results <- cbind.data.frame(parms, conductance = sens_sobol$y)
+```
+
+```{r}
+ggplot(sens_results, aes(conductance)) +
+    geom_histogram() +
+    geom_vline(xintercept = mean(sens_results$conductance), color = 'brown')
+```
+
+```{r}
+ggplot(sens_results, aes(v, conductance, color = height)) +
+    geom_point() +
+    labs(x = "Windspeed (cm/s)", y = "Conductance", color = "Vegetation Height", title = "Atmospheric Conductance: Sobol Sensitivity Analysis") +
+
+    scale_color_continuous(palette = "magma") +
+    scale_y_continuous(labels = scales::label_comma()) +
+    theme_classic()
+```
