@@ -1,47 +1,68 @@
 ---
+title: "Homework 5: Sobol Sensitity Analysis"
 author: "Zach Loo"
+date: "February 10, 2026"
+execute:
+    message: false
+    warning: false
 ---
 
+# Sobol Sensitivity in Research
+
+Kumar, Deepak, et al. “Sobol Sensitivity Analysis for Risk Assessment of Uranium in Groundwater.” Environmental Geochemistry and Health, vol. 42, no. 6, June 2020, pp. 1789–801. DOI.org (Crossref), https://doi.org/10.1007/s10653-020-00522-5.
+
+This paper evaluated risk of uranium exposure from groundwater in different age groups (children & adult). The authors implemented a Sobol sensitivity analysis to find which parameters for uranium risk assessment are the most influential. The study concluded that first order effects analysis showed that the concentration of uranium parameter was the most influential for the ingestion & dermal risk model. The results of this sensitivity analysis makes sense. The most influential factor for exposure to uranium in groundwater is the concentration of uranium itself. This result contributes to the understanding of environmental pollution, specifically groundwater contamination, and enforces the importance of monitoring groundwater health.
+
 ```{r}
+# Load packages
 library(tidyverse)
 library(sensitivity)
 ```
 
 ```{r}
+# Load conductance model function
 source(here::here("5_sobol", "Catm.R"))
 ```
 
 ```{r}
 # Create parameters from random sample
 np <- 1000
-v <- rnorm(mean = 300, sd = 50, n = np) # cm/s
-height <- runif(min = 3.5, max = 5.5, n = np) # m or cm??
+v <- rnorm(mean = 3, sd = 0.5, n = np) # cm/s (3 m/s)
+height <- runif(min = 3.5, max = 5.5, n = np) # m
 k_d <- rnorm(mean = 0.7, sd = 0.007, n = np)
 k_o <- rnorm(mean = 0.1, sd = 0.001, n = np)
 
+# Create first input matrix
 X1 <- cbind.data.frame(v, height, k_d, k_o)
 
 # Repeat sampling
-v2 <- rnorm(mean = 300, sd = 50, n = np)
+v2 <- rnorm(mean = 3, sd = 0.5, n = np)
 height2 <- runif(min = 3.5, max = 5.5, n = np)
 k_d2 <- rnorm(mean = 0.7, sd = 0.007, n = np)
 k_o2 <- rnorm(mean = 0.1, sd = 0.001, n = np)
 
+# Create second input matrix
 X2 <- cbind.data.frame(v2, height2, k_d2, k_o2)
 ```
 
 ```{r}
+# Construct sampling design from input matrices
 sens_sobol <- sobolSalt(X1 = X1, X2 = X2, nboot = 100)
 ```
 
 ```{r}
+# Extract design
 parms <- as.data.frame(sens_sobol$X)
+# Add back column names to design
 colnames(parms) <- colnames(X1)
+
+# Evaluate atmosphere conductance for each row
 results <- pmap_dbl(parms, Catm)
 ```
 
 ```{r}
-sens_sobol <- sensitivity::tell(sens_sobol, results, res.names = 'yield')
+# Feed model outputs back to sobol object 
+sens_sobol <- sensitivity::tell(sens_sobol, results)
 
 # Add row names
 row.names(sens_sobol$S) <- colnames(parms)
@@ -49,21 +70,36 @@ row.names(sens_sobol$T) <- colnames(parms)
 ```
 
 ```{r}
+# Combine model outputs to corresponding input rows for plotting
 sens_results <- cbind.data.frame(parms, conductance = sens_sobol$y)
 ```
 
 ```{r}
+# Conductance and parameter uncertainty
 ggplot(sens_results, aes(conductance)) +
-    geom_histogram() +
-    geom_vline(xintercept = mean(sens_results$conductance), color = 'brown')
+    geom_density() +
+    geom_vline(xintercept = mean(sens_results$conductance), color = 'brown') +
+    
+    labs(x = "Conductance (mm/s)", y = "Density", title = "Conductance Distribution from Parameter Uncertainty") +
+
+    theme_classic()
 ```
 
 ```{r}
+# Conductance against windspeed & height
 ggplot(sens_results, aes(v, conductance, color = height)) +
     geom_point() +
-    labs(x = "Windspeed (cm/s)", y = "Conductance", color = "Vegetation Height", title = "Atmospheric Conductance: Sobol Sensitivity Analysis") +
+    labs(x = "Windspeed (m/s)", y = "Conductance (mm/s)", color = "Vegetation Height (m)", title = "Atmospheric Conductance vs Windspeed & Height") +
 
-    scale_color_continuous(palette = "magma") +
+    scale_color_continuous(palette = "viridis") +
     scale_y_continuous(labels = scales::label_comma()) +
     theme_classic()
 ```
+
+# Sensitivity Summary
+
+From this analysis and from class, we've seen that windspeed affects conductance the most, followed by vegetation height. The class example assumed lower windspeeds (mean: 2.5 m/s) and higher vegetation height (9.5 - 10.5m). The resulting plot was somewhat-linear, with our conductance values right skewed (mean: ~18,000 mm/s). Also, there was not a clear relationship between conductance and vegetation height. 
+
+*Disclaimer for this analysis, the input windspeed (300 cm/s) was given in cm/s, as those are the units we used in class. This didn't line up with the units the function takes in for windspeed, which are in m/s. Especially since all the other inputs use meters like vegetation height and measurement height, I thought it'd be best to convert to meters for windspeed.*
+
+In this analysis, we raised the windspeed to 3 m/s, and lowered the vegetation height to 3.5 - 5.5m. Our conductance plot was much more linear, in relation to windspeed and height. First, the distribution of conductance values was much more normally distributed (mean: ~120 mm/s). Additionally, there is a much clearer relationship between vegetation height and conductance, indicated by the point colors. 
