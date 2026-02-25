@@ -1,0 +1,151 @@
+---
+title: "Homework 6: Sobol Forests"
+author: "Zach Loo"
+execute:
+    message: false
+    warning: false
+---
+
+```{r}
+# Load packages
+library(tidyverse)
+library(sensitivity)
+library(deSolve)
+library(kableExtra)
+```
+
+# Forest Growth Model
+Write model function and run model for 300 years with given parameters, no uncertainty
+
+```{r}
+#' Forest growth model
+#' 
+#' @param time Time sequence for forest growth (years).
+#' @param C Initial forest size in kilograms of carbon (kgC).
+#' @param parms List of parameters including r: rate of exponential growth, g: rate of linear growth (kgC/year), thresh: threshold at which growth rates change from exponential growth to linear growth (kgC), and K: carrying capacity of forest (kgC).
+#' 
+#' @return A list of dC/dt, the rate of change in forest size (kgC/year). Below threshold, growth is exponential, while after threshold, growth is linear. To be fed into ODE solver to calculate the resulting forest size.
+forest_growth <- function(time, C, parms){
+    if (C < parms$thresh) {
+        dC <- parms$r * C
+    } else {
+        dC <- parms$g * (1 - C / parms$K)
+    }
+    return(list(dC))
+}
+```
+
+```{r}
+# Parameters, no uncertainty
+parms <- list(r = 0.01, g = 2, K = 250, thresh = 50)
+time <- seq(0, 300, by = 1)
+
+# Run model
+result <- ode(y = c(C = 10), times = time, func = forest_growth, parms = parms)
+```
+
+```{r}
+# Plot first model with given parameters
+ggplot(result, aes(x = time, y = C)) +
+    geom_hline(yintercept = 50, linetype = 'dashed', color = 'grey59') +
+    geom_line(color = '#4a7856', linewidth = 2) +
+    annotate('text', label = "Canopy Closure Threshold", x = 80, y = 55, color = 'grey39') +
+    labs(x = "Time (Years)", y = "Forest Size (kgC)", title = "Initial Forest Model for 300 Years") +
+    theme_light()
+```
+
+# Sobol Global 
+How does the maximum forest size (after 300 years) vary with a 10% variation of the parameters?
+
+```{r}
+np  <- 2000
+# Create sample range of parameters
+r <- rnorm(mean = 0.01, sd = 0.001, n = np)
+g <- rnorm(mean = 2, sd = 0.02, n = np)
+thresh <- rnorm(mean = 50, sd = 0.5, n = np)
+K <- rnorm(mean = 250, sd = 2.5, n = np)
+
+X1 <- bind_cols(r = r, g = g, thresh = thresh, K = K)
+
+# Repeat sampling
+r2 <- rnorm(mean = 0.01, sd = 0.001, n = np)
+g2 <- rnorm(mean = 2, sd = 0.02, n = np)
+thresh2 <- rnorm(mean = 50, sd = 0.5, n = np)
+K2 <- rnorm(mean = 250, sd = 2.5, n = np)
+
+X2 <- bind_cols(r = r2, g = g2, thresh = thresh2, K = K2)
+```
+
+```{r}
+# Construct sobol object from input matrices
+sens_sobol <- sobolSalt(X1 = X1, X2 = X2, nboot = 100)
+```
+
+```{r}
+# Extract design
+parms <- as.data.frame(sens_sobol$X)
+colnames(parms)  <- colnames(X1)
+```
+
+```{r}
+#' Wrapper function so that the ODE runs for each row of parameters.
+#' 
+#' @param r Exponential growth rate.
+#' @param g Linear growth rate once threshold is met (kgC/year)
+#' @param thresh Threshold of forest size at which growth rates change from exponential growth to linear growth (kgC).
+#' @param K Carrying capacity of forest (kgC).
+#' 
+#' @return The maximum forest size (kgC) after a 300 year simulation, extracted from the ODE solver. 
+forest_wrapper <- function(r, g, thresh, K) {
+    parms <- list(r = r, g = g, thresh = thresh, K = K)
+    time <- seq(0, 300, by = 1)
+    result <- ode(y = c(C = 10), times = time, func = forest_growth, parms = parms)
+    return(max(result[, "C"]))
+}
+```
+```{r}
+# Evaluate forest size for each row with wrapper function
+sobol_results <- pmap_dbl(parms, forest_wrapper)
+```
+
+```{r}
+# Send results back to sobol object
+sens_sobol <- sensitivity::tell(sens_sobol, sobol_results)
+
+# Add row names to indices
+row.names(sens_sobol$S) <- colnames(parms)
+row.names(sens_sobol$T) <- colnames(parms)
+```
+
+```{r}
+# Add results column to parameter rows
+sens_results <- bind_cols(parms, sens_sobol$y) |> 
+    rename(forest_size = "...5")
+```
+
+## First-order
+
+```{r}
+kable(sens_sobol$S)
+```
+
+## Total-order
+
+```{r}
+kable(sens_sobol$T)
+```
+
+```{r}
+# Plot distribution of maximum forest size based on parameter variation
+ggplot(sens_results, aes(y = forest_size)) +
+    geom_boxplot() +
+    labs(y = "Forest Size (kgC)", title = "Resulting Maximum Forest Size (kgC) from Sobol Sensitivity") +
+    theme_light() +
+    theme(
+        axis.text.x = element_blank(),
+    )
+```
+
+# Simulation Results
+
+After running the sobol sensitivity on our parameters, it is discovered that `r`, exponential growth rate, is the most influencing parameter. It would make sense if this parameter is influenced by climate change since forest growth would be dependent on the climate. Either local climate becoming warmer and wetter would drive up a forest growth rate or drier conditions in a forest would lead to a lower growth rate.
