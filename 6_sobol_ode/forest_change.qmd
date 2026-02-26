@@ -1,6 +1,7 @@
 ---
 title: "Homework 6: Sobol Forests"
 author: "Zach Loo"
+date: "February 26, 2026"
 execute:
     message: false
     warning: false

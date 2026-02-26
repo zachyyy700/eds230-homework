@@ -7,6 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Zach Loo">
+<meta name="dcterms.date" content="2026-02-26">
 
 <title>Homework 6: Sobol Forests</title>
 <style>
@@ -97,6 +98,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           </div>
   </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">February 26, 2026</p>
+    </div>
+  </div>
   
     
   </div>
@@ -142,7 +149,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">ode</span>(<span class="at">y =</span> <span class="fu">c</span>(<span class="at">C =</span> <span class="dv">10</span>), <span class="at">times =</span> time, <span class="at">func =</span> forest_growth, <span class="at">parms =</span> parms)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot first model</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot first model with given parameters</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(result, <span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> C)) <span class="sc">+</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">50</span>, <span class="at">linetype =</span> <span class="st">'dashed'</span>, <span class="at">color =</span> <span class="st">'grey59'</span>) <span class="sc">+</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">'#4a7856'</span>, <span class="at">linewidth =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
@@ -240,35 +247,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">r</td>
-<td style="text-align: right;">0.9835009</td>
-<td style="text-align: right;">-0.0000255</td>
-<td style="text-align: right;">0.0008812</td>
-<td style="text-align: right;">0.9819142</td>
-<td style="text-align: right;">0.9856942</td>
+<td style="text-align: right;">0.9809517</td>
+<td style="text-align: right;">-0.0000433</td>
+<td style="text-align: right;">0.0008836</td>
+<td style="text-align: right;">0.9794644</td>
+<td style="text-align: right;">0.9829168</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">g</td>
-<td style="text-align: right;">0.0010376</td>
-<td style="text-align: right;">0.0031873</td>
-<td style="text-align: right;">0.0250748</td>
-<td style="text-align: right;">-0.0516287</td>
-<td style="text-align: right;">0.0520292</td>
+<td style="text-align: right;">0.0277610</td>
+<td style="text-align: right;">-0.0004697</td>
+<td style="text-align: right;">0.0249583</td>
+<td style="text-align: right;">-0.0185359</td>
+<td style="text-align: right;">0.0766542</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">thresh</td>
-<td style="text-align: right;">-0.0014040</td>
-<td style="text-align: right;">0.0031452</td>
-<td style="text-align: right;">0.0256259</td>
-<td style="text-align: right;">-0.0548559</td>
-<td style="text-align: right;">0.0473111</td>
+<td style="text-align: right;">0.0203522</td>
+<td style="text-align: right;">-0.0008414</td>
+<td style="text-align: right;">0.0243267</td>
+<td style="text-align: right;">-0.0230083</td>
+<td style="text-align: right;">0.0686433</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">K</td>
-<td style="text-align: right;">0.0088927</td>
-<td style="text-align: right;">0.0031558</td>
-<td style="text-align: right;">0.0242583</td>
-<td style="text-align: right;">-0.0391344</td>
-<td style="text-align: right;">0.0572977</td>
+<td style="text-align: right;">0.0303842</td>
+<td style="text-align: right;">-0.0002407</td>
+<td style="text-align: right;">0.0244325</td>
+<td style="text-align: right;">-0.0154858</td>
+<td style="text-align: right;">0.0777452</td>
 </tr>
 </tbody>
 </table>
@@ -294,48 +301,49 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">r</td>
-<td style="text-align: right;">0.9900478</td>
-<td style="text-align: right;">-0.0034477</td>
-<td style="text-align: right;">0.0252658</td>
-<td style="text-align: right;">0.9406517</td>
-<td style="text-align: right;">1.0428690</td>
+<td style="text-align: right;">0.9548508</td>
+<td style="text-align: right;">0.0004153</td>
+<td style="text-align: right;">0.0237641</td>
+<td style="text-align: right;">0.9066333</td>
+<td style="text-align: right;">0.9950827</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">g</td>
-<td style="text-align: right;">0.0060818</td>
-<td style="text-align: right;">-0.0000042</td>
-<td style="text-align: right;">0.0004405</td>
-<td style="text-align: right;">0.0049950</td>
-<td style="text-align: right;">0.0068117</td>
+<td style="text-align: right;">0.0053727</td>
+<td style="text-align: right;">0.0000513</td>
+<td style="text-align: right;">0.0003142</td>
+<td style="text-align: right;">0.0044842</td>
+<td style="text-align: right;">0.0059513</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">thresh</td>
-<td style="text-align: right;">0.0016734</td>
-<td style="text-align: right;">-0.0000132</td>
-<td style="text-align: right;">0.0001011</td>
-<td style="text-align: right;">0.0014724</td>
-<td style="text-align: right;">0.0018751</td>
+<td style="text-align: right;">0.0015711</td>
+<td style="text-align: right;">0.0000060</td>
+<td style="text-align: right;">0.0000890</td>
+<td style="text-align: right;">0.0013574</td>
+<td style="text-align: right;">0.0017183</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">K</td>
-<td style="text-align: right;">0.0100328</td>
-<td style="text-align: right;">-0.0000652</td>
-<td style="text-align: right;">0.0006430</td>
-<td style="text-align: right;">0.0088704</td>
-<td style="text-align: right;">0.0115587</td>
+<td style="text-align: right;">0.0096671</td>
+<td style="text-align: right;">0.0000331</td>
+<td style="text-align: right;">0.0005883</td>
+<td style="text-align: right;">0.0082817</td>
+<td style="text-align: right;">0.0107394</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(sens_results, <span class="fu">aes</span>(<span class="at">y =</span> forest_size)) <span class="sc">+</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Forest Size (kgC)"</span>, <span class="at">title =</span> <span class="st">"Resulting Maximum Forest Size (kgC) from Sobol Sensitivity"</span>) <span class="sc">+</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_light</span>() <span class="sc">+</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.x =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot distribution of maximum forest size based on parameter variation</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(sens_results, <span class="fu">aes</span>(<span class="at">y =</span> forest_size)) <span class="sc">+</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Forest Size (kgC)"</span>, <span class="at">title =</span> <span class="st">"Resulting Maximum Forest Size (kgC) from Sobol Sensitivity"</span>) <span class="sc">+</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_light</span>() <span class="sc">+</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -345,6 +353,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </section>
+</section>
+<section id="simulation-results" class="level1">
+<h1>Simulation Results</h1>
+<p>After running the sobol sensitivity on our parameters, it is discovered that <code>r</code>, exponential growth rate, is the most influencing parameter. It would make sense if this parameter is influenced by climate change since forest growth would be dependent on the climate. Either local climate becoming warmer and wetter would drive up a forest growth rate or drier conditions in a forest would lead to a lower growth rate.</p>
 </section>
 
 </main>
