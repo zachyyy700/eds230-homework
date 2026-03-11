@@ -1,0 +1,161 @@
+---
+title: "Homework 7: Predator-Prey"
+author: "Zach Loo"
+execute:
+  message: false
+  warning: false
+---
+
+```{r}
+library(tidyverse)
+library(sensitivity)
+library(deSolve)
+```
+
+```{r}
+source(here::here("7_predator_prey/lotvmodK.R"))
+```
+
+Set up initial model without hunting, given initial populations.
+
+```{r}
+# Initial populations
+currpop <- c(prey = 40, pred = 1)
+
+# Time range
+days  <- seq(1, 250, by = 1)
+
+# Parameters
+parms <- c(rprey = 0.95, alpha = 0.01, eff = 0.6, pmort = 0.4, K = 2000)
+
+# Run ODE
+results <- ode(func = lotvmodK, y = currpop, times = days, parms = parms)
+```
+
+```{r}
+# Visualize
+ggplot(data = results) +
+    geom_line(aes(time, prey), color = 'darkgreen') +
+    geom_line(aes(time, pred), color = 'red') +
+    labs(x = "Days", y = "Count") +
+    theme_light()
+```
+
+# Hunting Parms, Function Implement, & ODE
+
+Goal for hunting implementation: Minimum threshold of prey must be met before hunting begins.
+
+Prey-hunt threshold: 6?
+
+```{r}
+# Parameters
+parms <- c(rprey = 0.95, alpha = 0.01, eff = 0.6, pmort = 0.4, K = 2000, rhunt = 0.1, min_prey = 500)
+
+# Model hunt implement
+lotvmodKhunt <- function(t, pop, pars) {
+  with(as.list(c(pars, pop)), {
+
+    hunt  <- if (prey > min_prey) rhunt * prey else 0
+
+    dprey <- rprey * (1 - prey / K) * prey - alpha * prey * pred - hunt
+    dpred <- eff * alpha * prey * pred - pmort * pred
+    return(list(c(dprey, dpred)))
+  })
+}
+```
+
+```{r}
+# Initial populations
+currpop <- c(prey = 1000, pred = 50)
+# Time range
+days  <- seq(1, 500, by = 1)
+# Parameters
+parms <- c(rprey = 0.95, alpha = 0.01, eff = 0.6, pmort = 0.4, K = 2000, rhunt = 0.01, min_prey = 500)
+results_hunt <- as.data.frame(ode(func = lotvmodKhunt, y = currpop, times = days, parms = parms))
+
+# Visualize
+ggplot(data = results_hunt) +
+    geom_line(aes(time, prey), color = 'darkgreen') +
+    geom_line(aes(time, pred), color = 'red') +
+    labs(x = "Days", y = "Count") +
+    theme_light()
+```
+
+# Uncertainty & Stability
+
+```{r}
+# --- Model ---
+lotvmodKhunt <- function(t, pop, pars) {
+  with(as.list(c(pars, pop)), {
+    hunt  <- if (prey > min_prey) rhunt * prey else 0
+    dprey <- rprey * (1 - prey / K) * prey - alpha * prey * pred - hunt
+    dpred <- eff * alpha * prey * pred - pmort * pred
+    return(list(c(dprey, dpred)))
+  })
+}
+
+# --- Sampling ---
+n_runs  <- 500
+set.seed(42)
+days    <- seq(1, 500, by = 1)
+currpop <- c(prey = 1000, pred = 50)
+
+param_samples <- tibble(
+  rprey    = runif(n_runs, 0.95 * 0.8, 0.95 * 1.2),
+  alpha    = runif(n_runs, 0.01 * 0.8, 0.01 * 1.2),
+  eff      = runif(n_runs, 0.6  * 0.8, 0.6  * 1.2),
+  pmort    = runif(n_runs, 0.4  * 0.8, 0.4  * 1.2),
+  K        = 2000, 
+  rhunt    = 0.1,       # change this & re-run
+  min_prey = 500
+)
+```
+
+```{r}
+# --- Run simulations ---
+run_model <- function(row) {
+  p <- unlist(row)
+  out <- tryCatch(
+    as.data.frame(ode(func = lotvmodKhunt, y = currpop, times = days, parms = p)),
+    error = function(e) NULL
+  )
+  if (is.null(out)) return(NA_real_)
+  min(tail(out$prey, 250))
+}
+
+param_samples$min_prey_last250 <- map_dbl(1:n_runs, ~run_model(param_samples[.x, ]))
+```
+
+```{r}
+# Stability flag based on min prey threshold
+param_samples <- param_samples %>%
+  mutate(stable = min_prey_last250 > 100)
+
+# --- Summary ---
+cat("Stable runs:", sum(param_samples$stable), "/", n_runs,
+    "(", round(100 * mean(param_samples$stable), 1), "%)\n")
+```
+
+```{r}
+# --- Plot: min prey distribution ---
+ggplot(param_samples, aes(x = min_prey_last250, fill = stable)) +
+  geom_histogram(bins = 40, color = "white", linewidth = 0.2) +
+  geom_vline(xintercept = 100, linetype = "dashed", color = "orange", linewidth = 0.8) +
+  scale_fill_manual(values = c("TRUE" = "#3fb950", "FALSE" = "#f85149"),
+                    labels = c("TRUE" = "Stable", "FALSE" = "Unstable")) +
+  labs(
+    title    = paste0("Distribution of min prey (last 250d) across 500 random parameter sets  |  rhunt = ", unique(param_samples$rhunt)),
+    subtitle = "Parameters varied ±20% around baseline. Orange dashed = stability threshold (min prey = 100).",
+    x        = "Min prey population (days 250–500)",
+    y        = "Count",
+    fill     = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title     = element_text(face = "bold", size = 11),
+    plot.subtitle  = element_text(color = "grey50", size = 9),
+    legend.position = "bottom"
+  )
+```
+
+I decided to define stability as if they prey population was over 100 during the last 250 days, this was mostly arbitrary and I genuinely tried to find a reasonable justification but playing around with the parameters was very difficult. Even when varying rhunt, I'd get results that did not make sense and would just give errors. I wish I could've done better with this assignment but I genuinely did not know how. For example, `rhunt` is currently 0.1 and if I increase this 0.5, I'd expect to get less stable runs, which they do but it goes from 2% to 0.2%, these values just seem oddly low.
